@@ -1,0 +1,255 @@
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+@prefix ckg:  <http://yogeshvarreddykallam.github.io/canvas-kg#> .
+
+# ─────────────────────────────────────────────
+#  Ontology declaration
+# ─────────────────────────────────────────────
+
+ckg: a owl:Ontology ;
+    rdfs:label "Canvas Course Knowledge Graph Ontology" ;
+    rdfs:comment """
+    OWL ontology for representing knowledge extracted from a Canvas LMS course
+    (CMPSC 132 — Programming and Computation II, Penn State).
+    Captures concepts, modules, assignments, and their semantic relationships
+    to support graph-enhanced retrieval (GraphRAG).
+    """ ;
+    owl:versionInfo "1.0.0" .
+
+# ─────────────────────────────────────────────
+#  Classes
+# ─────────────────────────────────────────────
+
+ckg:Concept a owl:Class ;
+    rdfs:label "Concept" ;
+    rdfs:comment "A course concept or technical term (e.g. 'linked list', 'recursion', 'Big-O notation')." .
+
+ckg:DataStructure a owl:Class ;
+    rdfs:subClassOf ckg:Concept ;
+    rdfs:label "Data Structure" ;
+    rdfs:comment "A named data organisation pattern (e.g. 'stack', 'heap', 'binary search tree')." .
+
+ckg:Algorithm a owl:Class ;
+    rdfs:subClassOf ckg:Concept ;
+    rdfs:label "Algorithm" ;
+    rdfs:comment "A computational procedure (e.g. 'merge sort', 'DFS', 'dynamic programming')." .
+
+ckg:ProgrammingConstruct a owl:Class ;
+    rdfs:subClassOf ckg:Concept ;
+    rdfs:label "Programming Construct" ;
+    rdfs:comment "A language-level feature (e.g. 'class', 'inheritance', 'iterator', 'decorator')." .
+
+ckg:Module a owl:Class ;
+    rdfs:label "Module" ;
+    rdfs:comment "A course module or week folder from the Canvas LMS." .
+
+ckg:Assignment a owl:Class ;
+    rdfs:label "Assignment" ;
+    rdfs:comment "A graded task — homework, lab, or project — belonging to a module." .
+
+ckg:SourceChunk a owl:Class ;
+    rdfs:label "Source Chunk" ;
+    rdfs:comment "A text passage extracted from a course PDF or code file and indexed for retrieval." .
+
+# ─────────────────────────────────────────────
+#  Object Properties
+# ─────────────────────────────────────────────
+
+ckg:relatedTo a owl:ObjectProperty , owl:SymmetricProperty ;
+    rdfs:domain ckg:Concept ;
+    rdfs:range  ckg:Concept ;
+    rdfs:label "related to" ;
+    rdfs:comment "Two concepts that co-occur frequently or share semantic proximity." .
+
+ckg:hasPrerequisite a owl:ObjectProperty , owl:TransitiveProperty ;
+    rdfs:domain ckg:Concept ;
+    rdfs:range  ckg:Concept ;
+    rdfs:label "has prerequisite" ;
+    rdfs:comment "Concept A cannot be understood without first understanding Concept B." .
+
+ckg:isPrerequisiteOf a owl:ObjectProperty ;
+    owl:inverseOf ckg:hasPrerequisite ;
+    rdfs:domain ckg:Concept ;
+    rdfs:range  ckg:Concept ;
+    rdfs:label "is prerequisite of" .
+
+ckg:partOf a owl:ObjectProperty , owl:TransitiveProperty ;
+    rdfs:label "part of" ;
+    rdfs:comment "Subclass / whole relationship between concepts or module membership." .
+
+ckg:belongsToModule a owl:ObjectProperty ;
+    rdfs:subPropertyOf ckg:partOf ;
+    rdfs:domain ckg:Concept ;
+    rdfs:range  ckg:Module ;
+    rdfs:label "belongs to module" ;
+    rdfs:comment "The module in which this concept is primarily taught." .
+
+ckg:mentionedIn a owl:ObjectProperty ;
+    rdfs:domain ckg:Concept ;
+    rdfs:range  ckg:SourceChunk ;
+    rdfs:label "mentioned in" ;
+    rdfs:comment "The concept appears in this source chunk." .
+
+ckg:hasAssignment a owl:ObjectProperty ;
+    rdfs:domain ckg:Module ;
+    rdfs:range  ckg:Assignment ;
+    rdfs:label "has assignment" .
+
+ckg:tests a owl:ObjectProperty ;
+    rdfs:domain ckg:Assignment ;
+    rdfs:range  ckg:Concept ;
+    rdfs:label "tests" ;
+    rdfs:comment "The assignment assesses understanding of this concept." .
+
+# ─────────────────────────────────────────────
+#  Datatype Properties
+# ─────────────────────────────────────────────
+
+ckg:label a owl:DatatypeProperty ;
+    rdfs:domain owl:Thing ;
+    rdfs:range  xsd:string ;
+    rdfs:label "label" .
+
+ckg:definition a owl:DatatypeProperty ;
+    rdfs:domain ckg:Concept ;
+    rdfs:range  xsd:string ;
+    rdfs:label "definition" ;
+    rdfs:comment "A short natural-language definition of the concept." .
+
+ckg:coOccurrenceWeight a owl:DatatypeProperty ;
+    rdfs:domain owl:ObjectProperty ;
+    rdfs:range  xsd:integer ;
+    rdfs:label "co-occurrence weight" ;
+    rdfs:comment "How many source chunks both concepts appear in together." .
+
+ckg:chunkId a owl:DatatypeProperty ;
+    rdfs:domain ckg:SourceChunk ;
+    rdfs:range  xsd:string ;
+    rdfs:label "chunk ID" .
+
+ckg:sourcePath a owl:DatatypeProperty ;
+    rdfs:domain ckg:SourceChunk ;
+    rdfs:range  xsd:string ;
+    rdfs:label "source path" .
+
+# ─────────────────────────────────────────────
+#  Seed Individuals — CMPSC 132 core concepts
+# ─────────────────────────────────────────────
+
+ckg:LinkedList a ckg:DataStructure ;
+    rdfs:label "Linked List" ;
+    ckg:definition "A linear data structure where each node holds a value and a pointer to the next node." ;
+    ckg:hasPrerequisite ckg:Node , ckg:Pointer .
+
+ckg:Node a ckg:DataStructure ;
+    rdfs:label "Node" ;
+    ckg:definition "A basic unit of a linked structure containing data and one or more links." .
+
+ckg:Pointer a ckg:ProgrammingConstruct ;
+    rdfs:label "Pointer / Reference" ;
+    ckg:definition "A variable that stores the memory address of another object." .
+
+ckg:Stack a ckg:DataStructure ;
+    rdfs:label "Stack" ;
+    ckg:definition "LIFO data structure supporting push and pop operations." ;
+    ckg:hasPrerequisite ckg:LinkedList ;
+    ckg:relatedTo ckg:Queue .
+
+ckg:Queue a ckg:DataStructure ;
+    rdfs:label "Queue" ;
+    ckg:definition "FIFO data structure supporting enqueue and dequeue operations." ;
+    ckg:hasPrerequisite ckg:LinkedList .
+
+ckg:BinaryTree a ckg:DataStructure ;
+    rdfs:label "Binary Tree" ;
+    ckg:definition "A hierarchical data structure where each node has at most two children." ;
+    ckg:hasPrerequisite ckg:Node ;
+    ckg:relatedTo ckg:BinarySearchTree .
+
+ckg:BinarySearchTree a ckg:DataStructure ;
+    rdfs:label "Binary Search Tree" ;
+    ckg:definition "A binary tree where left children are less than parent and right children are greater." ;
+    ckg:hasPrerequisite ckg:BinaryTree ;
+    ckg:relatedTo ckg:AVLTree .
+
+ckg:AVLTree a ckg:DataStructure ;
+    rdfs:label "AVL Tree" ;
+    ckg:definition "A self-balancing BST that maintains O(log n) height by rotation." ;
+    ckg:hasPrerequisite ckg:BinarySearchTree .
+
+ckg:Heap a ckg:DataStructure ;
+    rdfs:label "Heap" ;
+    ckg:definition "A complete binary tree satisfying the heap property; used in priority queues." ;
+    ckg:relatedTo ckg:PriorityQueue .
+
+ckg:PriorityQueue a ckg:DataStructure ;
+    rdfs:label "Priority Queue" ;
+    ckg:definition "An abstract data type where elements are dequeued by priority, not insertion order." ;
+    ckg:hasPrerequisite ckg:Heap .
+
+ckg:HashMap a ckg:DataStructure ;
+    rdfs:label "Hash Map" ;
+    ckg:definition "A key-value store using a hash function for O(1) average-case lookups." ;
+    ckg:relatedTo ckg:HashFunction .
+
+ckg:HashFunction a ckg:Algorithm ;
+    rdfs:label "Hash Function" ;
+    ckg:definition "A function that maps keys to array indices." .
+
+ckg:Graph a ckg:DataStructure ;
+    rdfs:label "Graph" ;
+    ckg:definition "A set of nodes (vertices) connected by edges; may be directed or undirected." ;
+    ckg:relatedTo ckg:BinaryTree .
+
+ckg:Recursion a ckg:ProgrammingConstruct ;
+    rdfs:label "Recursion" ;
+    ckg:definition "A technique where a function calls itself with a smaller sub-problem." ;
+    ckg:relatedTo ckg:DynamicProgramming .
+
+ckg:DynamicProgramming a ckg:Algorithm ;
+    rdfs:label "Dynamic Programming" ;
+    ckg:definition "Breaking a problem into overlapping subproblems and caching their solutions (memoisation)." ;
+    ckg:hasPrerequisite ckg:Recursion .
+
+ckg:Sorting a ckg:Algorithm ;
+    rdfs:label "Sorting" ;
+    ckg:definition "Algorithms for ordering elements: merge sort, quick sort, heap sort, etc." ;
+    ckg:relatedTo ckg:BigO .
+
+ckg:BigO a ckg:Concept ;
+    rdfs:label "Big-O Notation" ;
+    ckg:definition "Asymptotic notation describing the upper bound of an algorithm's time or space complexity." .
+
+ckg:OOP a ckg:ProgrammingConstruct ;
+    rdfs:label "Object-Oriented Programming" ;
+    ckg:definition "A paradigm organising code around objects with state and behaviour." ;
+    ckg:relatedTo ckg:Inheritance , ckg:Polymorphism .
+
+ckg:Inheritance a ckg:ProgrammingConstruct ;
+    rdfs:label "Inheritance" ;
+    ckg:definition "A mechanism allowing a class to derive properties and methods from a parent class." ;
+    ckg:hasPrerequisite ckg:OOP .
+
+ckg:Polymorphism a ckg:ProgrammingConstruct ;
+    rdfs:label "Polymorphism" ;
+    ckg:definition "The ability to use a unified interface for different underlying data types." ;
+    ckg:hasPrerequisite ckg:OOP .
+
+ckg:Iterator a ckg:ProgrammingConstruct ;
+    rdfs:label "Iterator" ;
+    ckg:definition "An object that enables sequential traversal of a container." ;
+    ckg:relatedTo ckg:LinkedList , ckg:BinaryTree .
+
+ckg:DFS a ckg:Algorithm ;
+    rdfs:label "Depth-First Search" ;
+    ckg:definition "A graph traversal that explores as far as possible along each branch before backtracking." ;
+    ckg:hasPrerequisite ckg:Graph , ckg:Recursion ;
+    ckg:relatedTo ckg:BFS .
+
+ckg:BFS a ckg:Algorithm ;
+    rdfs:label "Breadth-First Search" ;
+    ckg:definition "A graph traversal that visits all neighbours at the current depth before going deeper." ;
+    ckg:hasPrerequisite ckg:Graph , ckg:Queue ;
+    ckg:relatedTo ckg:DFS .
